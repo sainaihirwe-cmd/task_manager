@@ -1,0 +1,16 @@
+body { font-family: Arial, sans-serif; background:#f5f5f5; margin:0; }
+.container { max-width:900px; margin:32px auto; background:#fff; padding:20px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.08); }
+h1 { margin-top:0 }
+#task-form, #task-form * { box-sizing:border-box }
+#task-form { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px }
+#task-form input, #task-form textarea, #task-form select { padding:8px; border:1px solid #ddd; border-radius:4px }
+#task-form button { padding:8px 12px }
+.task { border:1px solid #eee; padding:12px; border-radius:4px; margin-bottom:8px; background:#fff }
+.task.done { opacity:0.6; text-decoration:line-through }
+.meta { color:#666; font-size:13px }
+.actions { margin-top:8px; display:flex; gap:8px }
+.btn { padding:6px 10px; cursor:pointer }
+.btn.danger { background:#ffdddd; border:1px solid #f5a3a3 }
+.task.overdue { border-left:6px solid #e74c3c; }
+.search-row { display:flex; gap:8px; margin-bottom:12px }
+.search-row input, .search-row select { padding:8px; border:1px solid #ddd; border-radius:4px }
