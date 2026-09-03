@@ -32,6 +32,16 @@ export default function App() {
     load()
   }
 
+  // toggle completion status between 'done' and 'pending'
+  async function toggleStatus(task) {
+    const newStatus = task.status === 'done' ? 'pending' : 'done'
+    await fetch(`${API_BASE}/${task.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    })
+    load()
+  }
+
 
   async function handleDelete(id) {
     if (!confirm('Delete this task?')) return
@@ -93,6 +103,7 @@ export default function App() {
             <p>{task.description}</p>
             <div className="meta">Due: {task.due_date||'—'} • Priority: {task.priority||'low'}</div>
             <div className="actions">
+              <button className="btn" onClick={()=>toggleStatus(task)}>{task.status==='done'?'Mark Incomplete':'Mark Done'}</button>
               <button className="btn" onClick={()=>handleEdit(task)}>Edit</button>
               <button className="btn danger" onClick={()=>handleDelete(task.id)}>Delete</button>
             </div>
