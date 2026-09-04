@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 
 const API_BASE = 'http://localhost:5050/api/tasks'
 
-// Simple Task Manager App (React)
 export default function App() {
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
@@ -12,7 +11,6 @@ export default function App() {
   const [search, setSearch] = useState('')
   const [filterPriority, setFilterPriority] = useState('all')
 
-  // load tasks from API
   async function load() {
     try {
       const res = await fetch(API_BASE)
@@ -51,7 +49,6 @@ export default function App() {
     }
   }
 
-  // toggle completion status between 'done' and 'pending'
   async function toggleStatus(task) {
     const newStatus = task.status === 'done' ? 'pending' : 'done'
     try {
@@ -109,7 +106,6 @@ export default function App() {
     }
   }
 
-  // apply search and filters
   const visible = tasks.filter(t => {
     const s = search.trim().toLowerCase()
     const matchesSearch = !s || (t.title || '').toLowerCase().includes(s)
@@ -117,45 +113,120 @@ export default function App() {
     return matchesSearch && matchesPriority
   })
 
+  const totalTasks = tasks.length
+  const doneTasks = tasks.filter(task => task.status === 'done').length
+  const pendingTasks = totalTasks - doneTasks
+
+  function formatDate(dateString) {
+    if (!dateString) return 'No due date'
+    return new Date(dateString).toLocaleDateString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric'
+    })
+  }
+
   return (
-    <div className="container">
-      <h1>Task Manager</h1>
-      <form id="task-form" onSubmit={handleAdd}>
-        <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Title" required />
-        <input value={dueDate} onChange={e=>setDueDate(e.target.value)} type="date" />
-        <select value={priority} onChange={e=>setPriority(e.target.value)}>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
-        <textarea value={description} onChange={e=>setDescription(e.target.value)} placeholder="Description"></textarea>
-        <button type="submit">Add Task</button>
-      </form>
+    <div className="app-shell">
+      <header className="topbar">
+        <div>
+          <p className="eyebrow">Productivity</p>
+          <h1>Task Manager</h1>
+        </div>
+        <div className="status-pill">{pendingTasks} left to do</div>
+      </header>
 
-      <div className="search-row">
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search title..." />
-        <select value={filterPriority} onChange={e=>setFilterPriority(e.target.value)}>
-          <option value="all">All priorities</option>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
-      </div>
+      <section className="stats-grid">
+        <div className="stat-card">
+          <span>Total tasks</span>
+          <strong>{totalTasks}</strong>
+        </div>
+        <div className="stat-card">
+          <span>Completed</span>
+          <strong>{doneTasks}</strong>
+        </div>
+        <div className="stat-card">
+          <span>Pending</span>
+          <strong>{pendingTasks}</strong>
+        </div>
+      </section>
 
-      <div id="tasks">
-        {visible.map(task=> (
-          <div key={task.id} className={`task ${task.status==='done'?'done':''}`}>
-            <h3>{task.title}</h3>
-            <p>{task.description}</p>
-            <div className="meta">Due: {task.due_date||'—'} • Priority: {task.priority||'low'}</div>
-            <div className="actions">
-              <button type="button" className="btn" onClick={()=>toggleStatus(task)}>{task.status==='done'?'Mark Incomplete':'Mark Done'}</button>
-              <button type="button" className="btn" onClick={()=>handleEdit(task)}>Edit</button>
-              <button type="button" className="btn danger" onClick={()=>handleDelete(task.id)}>Delete</button>
-            </div>
+      <section className="panel">
+        <form id="task-form" onSubmit={handleAdd} className="task-form">
+          <div className="field field-title">
+            <label>Task title</label>
+            <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to be done?" required />
           </div>
-        ))}
-      </div>
+
+          <div className="field field-date">
+            <label>Due date</label>
+            <input value={dueDate} onChange={e=>setDueDate(e.target.value)} type="date" />
+          </div>
+
+          <div className="field field-priority">
+            <label>Priority</label>
+            <select value={priority} onChange={e=>setPriority(e.target.value)}>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <div className="field field-description">
+            <label>Description</label>
+            <textarea value={description} onChange={e=>setDescription(e.target.value)} placeholder="Add more details..."></textarea>
+          </div>
+
+          <button type="submit" className="primary-btn">Add Task</button>
+        </form>
+      </section>
+
+      <section className="panel task-panel">
+        <div className="toolbar">
+          <div className="search-wrap">
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search task titles..." />
+          </div>
+
+          <select value={filterPriority} onChange={e=>setFilterPriority(e.target.value)} className="filter-select">
+            <option value="all">All priorities</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div id="tasks" className="task-list">
+          {visible.length === 0 ? (
+            <div className="empty-state">
+              <p>No tasks match your current filter.</p>
+            </div>
+          ) : (
+            visible.map(task => (
+              <article key={task.id} className={`task-card ${task.status === 'done' ? 'done' : ''}`}>
+                <div className="task-card-header">
+                  <h3>{task.title}</h3>
+                  <span className={`priority-badge ${task.priority || 'low'}`}>{task.priority || 'low'}</span>
+                </div>
+
+                <p className="task-description">{task.description || 'No description added yet.'}</p>
+
+                <div className="task-meta">
+                  <span>Due: {formatDate(task.due_date)}</span>
+                  <span className={`status-badge ${task.status === 'done' ? 'done' : 'pending'}`}>
+                    {task.status === 'done' ? 'Completed' : 'Active'}
+                  </span>
+                </div>
+
+                <div className="actions">
+                  <button type="button" className="btn primary" onClick={()=>toggleStatus(task)}>
+                    {task.status === 'done' ? 'Mark Incomplete' : 'Mark Done'}
+                  </button>
+                  <button type="button" className="btn secondary" onClick={()=>handleEdit(task)}>Edit</button>
+                  <button type="button" className="btn danger" onClick={()=>handleDelete(task.id)}>Delete</button>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+      </section>
     </div>
   )
 }
