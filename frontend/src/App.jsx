@@ -14,9 +14,18 @@ export default function App() {
 
   // load tasks from API
   async function load() {
-    const res = await fetch(API_BASE)
-    const data = await res.json()
-    setTasks(data)
+    try {
+      const res = await fetch(API_BASE)
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(errText || 'Unable to load tasks')
+      }
+      const data = await res.json()
+      setTasks(data)
+    } catch (err) {
+      console.error('Load tasks failed:', err)
+      alert('Could not load tasks from the database.')
+    }
   }
 
   useEffect(() => { load() }, [])
@@ -24,29 +33,56 @@ export default function App() {
   async function handleAdd(e) {
     e.preventDefault()
     if (!title.trim()) return alert('Title required')
-    await fetch(API_BASE, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description, due_date: dueDate || null, priority })
-    })
-    setTitle(''); setDescription(''); setDueDate(''); setPriority('low')
-    load()
+
+    try {
+      const res = await fetch(API_BASE, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, due_date: dueDate || null, priority })
+      })
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(errText || 'Create task failed')
+      }
+      setTitle(''); setDescription(''); setDueDate(''); setPriority('low')
+      load()
+    } catch (err) {
+      console.error('Add task failed:', err)
+      alert('Could not save the task to the database.')
+    }
   }
 
   // toggle completion status between 'done' and 'pending'
   async function toggleStatus(task) {
     const newStatus = task.status === 'done' ? 'pending' : 'done'
-    await fetch(`${API_BASE}/${task.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus })
-    })
-    load()
+    try {
+      const res = await fetch(`${API_BASE}/${task.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(errText || 'Status update failed')
+      }
+      load()
+    } catch (err) {
+      console.error('Toggle status failed:', err)
+      alert('Could not update the task status.')
+    }
   }
-
 
   async function handleDelete(id) {
     if (!confirm('Delete this task?')) return
-    await fetch(`${API_BASE}/${id}`, { method: 'DELETE' })
-    load()
+    try {
+      const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(errText || 'Delete task failed')
+      }
+      load()
+    } catch (err) {
+      console.error('Delete task failed:', err)
+      alert('Could not delete the task.')
+    }
   }
 
   async function handleEdit(task) {
@@ -56,11 +92,21 @@ export default function App() {
     if (newDesc === null) return
     const newPriority = prompt('Priority (low,medium,high)', task.priority || 'low')
     if (newPriority === null) return
-    await fetch(`${API_BASE}/${task.id}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: newTitle, description: newDesc, priority: newPriority })
-    })
-    load()
+
+    try {
+      const res = await fetch(`${API_BASE}/${task.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle, description: newDesc, priority: newPriority })
+      })
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(errText || 'Edit task failed')
+      }
+      load()
+    } catch (err) {
+      console.error('Edit task failed:', err)
+      alert('Could not update the task.')
+    }
   }
 
   // apply search and filters
@@ -73,7 +119,7 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>Task Manager (React)</h1>
+      <h1>Task Manager</h1>
       <form id="task-form" onSubmit={handleAdd}>
         <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Title" required />
         <input value={dueDate} onChange={e=>setDueDate(e.target.value)} type="date" />
@@ -98,14 +144,14 @@ export default function App() {
 
       <div id="tasks">
         {visible.map(task=> (
-          <div key={task.id} className={`task ${task.status==='done'?'done':''} ${task.due_date && new Date(task.due_date) < new Date() && task.status!=='done' ? 'overdue':''}`}>
+          <div key={task.id} className={`task ${task.status==='done'?'done':''}`}>
             <h3>{task.title}</h3>
             <p>{task.description}</p>
             <div className="meta">Due: {task.due_date||'—'} • Priority: {task.priority||'low'}</div>
             <div className="actions">
-              <button className="btn" onClick={()=>toggleStatus(task)}>{task.status==='done'?'Mark Incomplete':'Mark Done'}</button>
-              <button className="btn" onClick={()=>handleEdit(task)}>Edit</button>
-              <button className="btn danger" onClick={()=>handleDelete(task.id)}>Delete</button>
+              <button type="button" className="btn" onClick={()=>toggleStatus(task)}>{task.status==='done'?'Mark Incomplete':'Mark Done'}</button>
+              <button type="button" className="btn" onClick={()=>handleEdit(task)}>Edit</button>
+              <button type="button" className="btn danger" onClick={()=>handleDelete(task.id)}>Delete</button>
             </div>
           </div>
         ))}
